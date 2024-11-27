@@ -6,6 +6,8 @@ from fastapi.middleware.cors import CORSMiddleware  # CORSミドルウェアを�
 import mysql.connector  # MySQLデータベースとの接続を行うためのモジュールをインポート
 from mysql.connector import errorcode  # MySQLエラーコードの管理モジュールをインポート
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 app = FastAPI()
 
@@ -27,7 +29,7 @@ config = {
     'password': os.getenv('MYSQL_PASSWORD', 'F4XyhpicGw6P'),  # 環境変数からパスワードを取得
     'database': 'siryou_pos_db',  # 使用するデータベース名
     'client_flags': [mysql.connector.ClientFlag.SSL],  # SSL接続を使用するためのフラグ
-    'ssl_ca': '/Users/koheikanai/DigiCertGlobalRootCA.crt.pem'  # SSL証明書ファイルのパス
+    'ssl_ca': '/Users/koheikanai/certificate/DigiCertGlobalRootCA.crt.pem'  # SSL証明書ファイルのパス
 }
 
 # データベース接続を行い、ユーザー情報を取得する関数
@@ -39,7 +41,7 @@ def get_users_from_db():
 
         cursor = conn.cursor()  # カーソルを作成
         # ユーザー情報を取得するSQLクエリ（実際のテーブル名とカラム名に変更が必要）
-        query = "SELECT username, password FROM users;"
+        query = "SELECT username, password FROM users WHERE username = %s;"
         cursor.execute(query)  # SQLクエリを実行
 
         # 取得したデータを辞書形式に変換（ユーザー名をキー、パスワードを値として保存）
@@ -72,6 +74,7 @@ async def good_night(id: str):
 # '/login'エンドポイントを定義し、POSTメソッドのみを許可します
 @app.post("/login")
 async def login(request: Request):
+
     # リクエストのJSONデータを非同期で取得します
     data = await request.json()
     
@@ -83,6 +86,9 @@ async def login(request: Request):
     
     # データベースからユーザー情報を取得
     users = get_users_from_db()
+    print(f"Fetched users from DB: {users}")
+    print(f"Received Username: {username}")
+    print(f"Received Password: {password}")
     
     # ユーザー名がusers辞書に存在し、かつパスワードが一致するか確認します
     if username in users and users[username] == password:
