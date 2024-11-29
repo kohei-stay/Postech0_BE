@@ -1,7 +1,7 @@
-import os  # OSモジュールをインポート（環境変数の操作に使用）
-import mysql.connector  # MySQLデータベース接続用モジュールをインポート
-from mysql.connector import errorcode  # MySQLエラーコードをインポート
-from dotenv import load_dotenv  # .envファイルから環境変数を読み込むためのモジュールをインポート
+import os
+import mysql.connector
+from mysql.connector import errorcode
+from dotenv import load_dotenv
 
 # .envファイルをロード
 load_dotenv()
@@ -13,41 +13,68 @@ config = {
     'password': os.getenv('MYSQL_PASSWORD', 'F4XyhpicGw6P'),  # 環境変数からパスワードを取得
     'database': 'siryou_pos_db',  # 使用するデータベース名
     'client_flags': [mysql.connector.ClientFlag.SSL],  # SSL接続を使用するためのフラグ
-    'ssl_ca': '/Users/koheikanai/certificate/DigiCertGlobalRootCA.crt.pem'  # SSL証明書ファイルのパス
 }
 
-# データベース接続を取得
+# 環境に応じて証明書パスを設定
+if os.environ.get('AZURE_ENVIRONMENT') == 'true':  # Azure環境の場合
+    config['ssl_ca'] = 'D:/home/site/certificate/DigiCertGlobalRootCA.crt.pem'
+else:  # ローカル環境の場合
+    config['ssl_ca'] = '/Users/koheikanai/certificate/DigiCertGlobalRootCA.crt.pem'  # ローカルの証明書パスを指定
+
+# データベース接続と確認処理
 try:
-    conn = mysql.connector.connect(**config)  # configを使用してデータベースに接続
+    conn = mysql.connector.connect(**config)  # データベース接続
     print("Connection established")  # 接続成功メッセージを表示
-    
+
     cursor = conn.cursor()  # カーソルオブジェクトを作成
-    
-    # データベース内のユーザー情報を取得するSQLクエリ
-    query = "SELECT username, password FROM users;"  # usersテーブルからユーザー名とパスワードを選択
-    cursor.execute(query)  # クエリを実行
-    
-    # データを取得し、ディクショナリ形式で保存
-    users = {username: password for username, password in cursor.fetchall()}
-    
+
+    # Step 1: テーブル構造を確認
+    print("\nChecking table structure...")
+    cursor.execute("DESCRIBE users;")  # usersテーブルの構造を取得
+    table_structure = cursor.fetchall()
+    for column in table_structure:
+        print(column)
+
+    # Step 2: テーブルのデータ内容を確認
+    print("\nChecking table data...")
+    cursor.execute("SELECT username, email, password FROM users;")
+    rows = cursor.fetchall()
+    print("Current table data:")
+    for row in rows:
+        print(row)
+
+    # Step 3: 認証チェック
+    print("\nRunning authentication check...")
+    # テーブルから取得したデータを辞書形式に変換
+    users = {
+        username: {"email": email, "password": password}
+        for username, email, password in rows
+    }
+
     # テスト用の入力データ
-    input_username = "siryousan"  # テスト用のユーザー名
-    input_password = "password123"  # テスト用のパスワード
-    
-    # 認証チェック
-    if input_username in users and users[input_username] == input_password:
-        print(f"ようこそ！{input_username}さん")  # 認証成功メッセージ
+    input_username = "lego"
+    input_password = "password456"
+    input_email = "lego@example.com"
+
+    # 認証ロジック
+    if (
+        input_username in users
+        and users[input_username]["password"] == input_password
+        and users[input_username]["email"] == input_email
+    ):
+        print(f"ようこそ！{input_username}さん")
     else:
-        print("認証失敗")  # 認証失敗メッセージ
+        print("認証失敗")
 
     # 接続を閉じる
-    cursor.close()  # カーソルを閉じる
-    conn.close()  # データベース接続を閉じる
+    cursor.close()
+    conn.close()
+    print("\nDatabase connection closed.")
 
-except mysql.connector.Error as err:  # MySQLエラーが発生した場合の処理
+except mysql.connector.Error as err:  # エラー発生時の処理
     if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-        print("ユーザー名またはパスワードに誤りがあります")  # アクセス拒否エラーの場合のメッセージ
+        print("ユーザー名またはパスワードに誤りがあります")
     elif err.errno == errorcode.ER_BAD_DB_ERROR:
-        print("データベースが存在しません")  # データベースが存在しない場合のメッセージ
+        print("データベースが存在しません")
     else:
-        print(err)  # その他のエラーメッセージを表示
+        print(f"接続エラー: {err}")
