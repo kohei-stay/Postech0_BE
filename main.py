@@ -43,6 +43,7 @@ def get_users_from_db():
         cursor = conn.cursor()  # カーソルを作成
         # ユーザー情報を取得するSQLクエリ（実際のテーブル名とカラム名に変更が必要）
         query = "SELECT username, password FROM users WHERE username = %s;"
+        print("テスト")
         cursor.execute(query)  # SQLクエリを実行
 
         # 取得したデータを辞書形式に変換（ユーザー名をキー、パスワードを値として保存）
