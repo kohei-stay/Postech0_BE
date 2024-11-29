@@ -13,6 +13,7 @@ app = FastAPI()
 
 # CORSの設定を追加。全てのオリジン、メソッド、ヘッダーを許可
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],  # すべてのオリジン（アクセス元）を許可
@@ -29,7 +30,7 @@ config = {
     'password': os.getenv('MYSQL_PASSWORD', 'F4XyhpicGw6P'),  # 環境変数からパスワードを取得
     'database': 'siryou_pos_db',  # 使用するデータベース名
     'client_flags': [mysql.connector.ClientFlag.SSL],  # SSL接続を使用するためのフラグ
-    'ssl_ca': '/Users/koheikanai/certificate/DigiCertGlobalRootCA.crt.pem'  # SSL証明書ファイルのパス
+    'ssl_ca': '/site/site/certificate/DigiCertGlobalRootCA.crt.pem'  # SSL証明書ファイルのパス
 }
 
 # データベース接続を行い、ユーザー情報を取得する関数
@@ -79,7 +80,7 @@ async def login(request: Request):
     data = await request.json()
     
     # JSONデータから'username'を取得します。存在しない場合はNoneを返します
-    username = data.get('username')
+    username = data.get('email')
     
     # JSONデータから'password'を取得します。存在しない場合はNoneを返します
     password = data.get('password')
@@ -98,3 +99,4 @@ async def login(request: Request):
         # 認証失敗の場合、エラーメッセージを含むJSONレスポンスと
         # HTTP status code 401（Unauthorized）を返します
         raise HTTPException(status_code=401, detail="認証失敗")
+    
