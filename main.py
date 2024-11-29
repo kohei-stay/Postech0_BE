@@ -30,7 +30,7 @@ config = {
     'password': os.getenv('MYSQL_PASSWORD', 'F4XyhpicGw6P'),  # 環境変数からパスワードを取得
     'database': 'siryou_pos_db',  # 使用するデータベース名
     'client_flags': [mysql.connector.ClientFlag.SSL],  # SSL接続を使用するためのフラグ
-    'ssl_ca': '/site/site/certificate/DigiCertGlobalRootCA.crt.pem'  # SSL証明書ファイルのパス
+    'ssl_ca': '/home/site/site/certificate/DigiCertGlobalRootCA.crt.pem'  # SSL証明書ファイルのパス
 }
 
 # データベース接続を行い、ユーザー情報を取得する関数
