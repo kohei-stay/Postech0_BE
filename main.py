@@ -34,7 +34,7 @@ config = {
 }
 
 # データベース接続を行い、ユーザー情報を取得する関数
-def get_users_from_db():
+def get_users_from_db(username):
     try:
         # データベース接続を確立
         conn = mysql.connector.connect(**config)
@@ -44,11 +44,11 @@ def get_users_from_db():
         # ユーザー情報を取得するSQLクエリ（実際のテーブル名とカラム名に変更が必要）
         query = "SELECT username, password FROM users WHERE username = %s;"
         print("テスト")
-        cursor.execute(query)  # SQLクエリを実行
-
+        cursor.execute(query,(username,))  # SQLクエリを実行
+        print("テスト2")
         # 取得したデータを辞書形式に変換（ユーザー名をキー、パスワードを値として保存）
         users = {username: password for username, password in cursor.fetchall()}
-
+        print("テスト3")
         cursor.close()  # カーソルを閉じる
         conn.close()  # 接続を閉じる
         return users  # 取得したユーザー情報を返す
@@ -87,7 +87,7 @@ async def login(request: Request):
     password = data.get('password')
     
     # データベースからユーザー情報を取得
-    users = get_users_from_db()
+    users = get_users_from_db(username)
     print(f"Fetched users from DB: {users}")
     print(f"Received Username: {username}")
     print(f"Received Password: {password}")
