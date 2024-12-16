@@ -110,24 +110,18 @@ async def login(request: Request):
     
 @app.get("/home_main")
 async def search_documents(
-    q: str = "",              # 検索キーワード
-    product: str = "",        # 商材
-    department: str = "",     # 作成部署
-    industry: str = "",       # 業界
-    price: str = "",          # 提案価格
-    company: str = "",        # 会社
-    project: str = ""         # プロジェクト
+    q: str = "", product: str = "", department: str = "",
+    industry: str = "", price: str = "", company: str = "", project: str = ""
 ):
     try:
-        # データベース接続
-        conn = mysql.connector.connect(**config)
-        cursor = conn.cursor(dictionary=True)  # 結果を辞書形式で取得
+        # siryou_pos_db に接続
+        conn = get_db_connection(config_v2_db)
+        cursor = conn.cursor(dictionary=True)
 
-        # ベースSQLクエリ
         query = "SELECT * FROM siryou WHERE 1=1"
         params = []
 
-        # クエリパラメータに基づいて条件を追加
+        # 条件を追加
         if q:
             query += " AND title LIKE %s"
             params.append(f"%{q}%")
@@ -149,23 +143,15 @@ async def search_documents(
         if project:
             query += " AND project = %s"
             params.append(project)
-
-        # SQLクエリを実行
+        print(params)
         cursor.execute(query, params)
         results = cursor.fetchall()
 
-        # 接続を閉じる
         cursor.close()
         conn.close()
 
-        # 結果をレスポンスとして返す
         return {"results": results}
-
-    except mysql.connector.Error as err:
-        print(f"Database error: {err}")
-        raise HTTPException(status_code=500, detail="データベースエラーが発生しました")
 
     except Exception as e:
         print(f"Error: {e}")
         raise HTTPException(status_code=500, detail="サーバーエラーが発生しました")
-
