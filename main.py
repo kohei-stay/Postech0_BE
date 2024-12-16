@@ -33,6 +33,15 @@ config = {
     'ssl_ca': '/home/site/site/certificate/DigiCertGlobalRootCA.crt.pem'  # SSL証明書ファイルのパス
 }
 
+config_v2_db = {
+    'host': 'tech0-db-step4-studentrdb-9.mysql.database.azure.com',
+    'user': 'tech0gen7student',
+    'password': os.getenv('MYSQL_PASSWORD', 'F4XyhpicGw6P'),
+    'database': 'siryou_v2',
+    'client_flags': [mysql.connector.ClientFlag.SSL],
+    'ssl_ca': '/home/site/site/certificate/DigiCertGlobalRootCA.crt.pem'
+}
+
 # データベース接続を行い、ユーザー情報を取得する関数
 def get_users_from_db(username):
     try:
@@ -63,9 +72,7 @@ def read_root():
     return {"Hello": "World"}
 
 # /nightにアクセスがあった場合に実行される関数
-@app.get("/night")
-async def hello_night_world():
-    return "Good night!"  # シンプルなテキストメッセージを返す
+
 
 # /night/{id} にアクセスがあった場合に実行される関数
 @app.get("/night/{id}")
@@ -81,7 +88,7 @@ async def login(request: Request):
     data = await request.json()
     
     # JSONデータから'username'を取得します。存在しない場合はNoneを返します
-    username = data.get('email')
+    username = data.get('username')
     
     # JSONデータから'password'を取得します。存在しない場合はNoneを返します
     password = data.get('password')
@@ -101,3 +108,64 @@ async def login(request: Request):
         # HTTP status code 401（Unauthorized）を返します
         raise HTTPException(status_code=401, detail="認証失敗")
     
+@app.get("/home_main")
+async def search_documents(
+    q: str = "",              # 検索キーワード
+    product: str = "",        # 商材
+    department: str = "",     # 作成部署
+    industry: str = "",       # 業界
+    price: str = "",          # 提案価格
+    company: str = "",        # 会社
+    project: str = ""         # プロジェクト
+):
+    try:
+        # データベース接続
+        conn = mysql.connector.connect(**config)
+        cursor = conn.cursor(dictionary=True)  # 結果を辞書形式で取得
+
+        # ベースSQLクエリ
+        query = "SELECT * FROM siryou WHERE 1=1"
+        params = []
+
+        # クエリパラメータに基づいて条件を追加
+        if q:
+            query += " AND title LIKE %s"
+            params.append(f"%{q}%")
+        if product:
+            query += " AND product = %s"
+            params.append(product)
+        if department:
+            query += " AND department = %s"
+            params.append(department)
+        if industry:
+            query += " AND industry = %s"
+            params.append(industry)
+        if price:
+            query += " AND price = %s"
+            params.append(price)
+        if company:
+            query += " AND company = %s"
+            params.append(company)
+        if project:
+            query += " AND project = %s"
+            params.append(project)
+
+        # SQLクエリを実行
+        cursor.execute(query, params)
+        results = cursor.fetchall()
+
+        # 接続を閉じる
+        cursor.close()
+        conn.close()
+
+        # 結果をレスポンスとして返す
+        return {"results": results}
+
+    except mysql.connector.Error as err:
+        print(f"Database error: {err}")
+        raise HTTPException(status_code=500, detail="データベースエラーが発生しました")
+
+    except Exception as e:
+        print(f"Error: {e}")
+        raise HTTPException(status_code=500, detail="サーバーエラーが発生しました")
+
