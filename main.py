@@ -66,12 +66,20 @@ def get_users_from_db(username):
         # エラーが発生した場合の処理
         print(f"Error connecting to the database: {err}")  # エラーメッセージを表示
         return {}  # 空の辞書を返す
+    
+# 資料データベース接続関数
+def get_db_connection(config):
+    try:
+        conn = mysql.connector.connect(**config)
+        print("Database connection successful")
+        return conn
+    except mysql.connector.Error as err:
+        print(f"Error connecting to database: {err}")
+        raise
 
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
-
-# /nightにアクセスがあった場合に実行される関数
 
 
 # /night/{id} にアクセスがあった場合に実行される関数
@@ -107,6 +115,8 @@ async def login(request: Request):
         # 認証失敗の場合、エラーメッセージを含むJSONレスポンスと
         # HTTP status code 401（Unauthorized）を返します
         raise HTTPException(status_code=401, detail="認証失敗")
+    
+
     
 @app.get("/home_main")
 async def search_documents(
