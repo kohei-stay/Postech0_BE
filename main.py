@@ -113,6 +113,7 @@ async def search_documents(
     q: str = "", product: str = "", department: str = "",
     industry: str = "", price: str = "", company: str = "", project: str = ""
 ):
+    print("test")
     try:
         # siryou_pos_db に接続
         conn = get_db_connection(config_v2_db)
